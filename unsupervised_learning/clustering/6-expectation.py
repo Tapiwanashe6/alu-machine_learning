@@ -1,6 +1,6 @@
 
 #!/usr/bin/env python3
-"""Calculates the expectation step for a Gaussian Mixture Model."""
+"""Calculates the expectation step in the EM algorithm for a GMM."""
 
 import numpy as np
 
@@ -9,7 +9,7 @@ pdf = __import__('5-pdf').pdf
 
 def expectation(X, pi, m, S):
     """
-    Calculate the expectation step in the EM algorithm for a GMM.
+    Calculate the expectation step for a Gaussian Mixture Model.
 
     Args:
         X: numpy.ndarray of shape (n, d) containing the dataset.
@@ -18,8 +18,8 @@ def expectation(X, pi, m, S):
         S: numpy.ndarray of shape (k, d, d) containing covariances.
 
     Returns:
-        tuple: Posterior probabilities g of shape (k, n) and
-        the total log-likelihood, or (None, None) on failure.
+        tuple: Posterior probabilities of shape (k, n) and the
+        total log-likelihood, or (None, None) on failure.
     """
     if not isinstance(X, np.ndarray) or X.ndim != 2:
         return None, None
