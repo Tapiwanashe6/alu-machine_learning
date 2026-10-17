@@ -1,48 +1,63 @@
 #!/usr/bin/env python3
-
-"""
-This module contains a function that
-tests for the optimum number of clusters by variance
-"""
+"""Test K-means cluster counts using intra-cluster variance."""
 
 import numpy as np
+
 kmeans = __import__('1-kmeans').kmeans
 variance = __import__('2-variance').variance
 
 
 def optimum_k(X, kmin=1, kmax=None, iterations=1000):
     """
-    calculates intra-cluster variance for a dataset
+    Calculate variance improvements across different cluster counts.
 
-    X: numpy.ndarray (n, d) containing the dataset
-        - n no. of data points
-        - d no. of dimensions for each data point
-    kmin: positive integer - the minimum no. of clusters
-    kmax: positive integer - the maximum no. of clusters
-    iterations: +ve(int) - max no. of iterations perfomed
+    Args:
+        X: Dataset with shape (n, d).
+        kmin: Smallest number of clusters to test.
+        kmax: Largest number of clusters to test, or None.
+        iterations: Maximum K-means iterations.
 
-    return:
-        - results: list containing the results of the
-        K-means for each cluster size
-        - d_vars: list containing the difference in variance
-        from the smallest cluster size for each cluster size
+    Returns:
+        K-means results and variance differences, or (None, None)
+        on failure.
     """
-    if not isinstance(X, np.ndarray) or len(X.shape) != 2:
+    if not isinstance(X, np.ndarray) or X.ndim != 2:
         return None, None
-    if not isinstance(kmin, int) or kmin <= 0:
+
+    n, d = X.shape
+    if n < 2 or d < 1:
         return None, None
-    if not isinstance(kmax, int) or kmax <= 0:
+
+    if not isinstance(kmin, int) or isinstance(kmin, bool) or kmin < 1:
         return None, None
-    if kmin >= kmax:
+
+    if kmax is None:
+        kmax = n
+
+    if (not isinstance(kmax, int) or isinstance(kmax, bool)
+            or kmax > n or kmax <= kmin):
         return None, None
-    if not isinstance(iterations, int) or iterations <= 0:
+
+    if (not isinstance(iterations, int) or isinstance(iterations, bool)
+            or iterations < 1):
         return None, None
+
     results = []
     d_vars = []
+    initial_variance = None
+
     for k in range(kmin, kmax + 1):
         C, clss = kmeans(X, k, iterations)
+        if C is None or clss is None:
+            return None, None
+
+        current_variance = variance(X, C)
+        if current_variance is None:
+            return None, None
+
         results.append((C, clss))
-        if k == kmin:
-            var = variance(X, C)
-        d_vars.append(var - variance(X, C))
+        if initial_variance is None:
+            initial_variance = current_variance
+        d_vars.append(initial_variance - current_variance)
+
     return results, d_vars
