@@ -12,15 +12,14 @@ def expectation(X, pi, m, S):
     Calculate the expectation step in the EM algorithm for a GMM.
 
     Args:
-        X: Dataset with shape (n, d).
-        pi: Cluster priors with shape (k,).
-        m: Cluster means with shape (k, d).
-        S: Covariance matrices with shape (k, d, d).
+        X: numpy.ndarray of shape (n, d) containing the dataset.
+        pi: numpy.ndarray of shape (k,) containing cluster priors.
+        m: numpy.ndarray of shape (k, d) containing cluster means.
+        S: numpy.ndarray of shape (k, d, d) containing covariances.
 
     Returns:
-        g: Posterior probabilities with shape (k, n).
-        l: Total log-likelihood.
-        (None, None) if the inputs are invalid.
+        tuple: Posterior probabilities g of shape (k, n) and
+        the total log-likelihood, or (None, None) on failure.
     """
     if not isinstance(X, np.ndarray) or X.ndim != 2:
         return None, None
@@ -43,6 +42,18 @@ def expectation(X, pi, m, S):
     if m.shape != (k, d) or S.shape != (k, d, d):
         return None, None
 
+    if not np.all(np.isfinite(X)):
+        return None, None
+
+    if not np.all(np.isfinite(pi)):
+        return None, None
+
+    if not np.all(np.isfinite(m)):
+        return None, None
+
+    if not np.all(np.isfinite(S)):
+        return None, None
+
     if np.any(pi < 0) or not np.isclose(np.sum(pi), 1):
         return None, None
 
@@ -51,7 +62,10 @@ def expectation(X, pi, m, S):
     for i in range(k):
         p = pdf(X, m[i], S[i])
 
-        if p is None:
+        if p is None or not isinstance(p, np.ndarray):
+            return None, None
+
+        if p.shape != (n,):
             return None, None
 
         g[i] = pi[i] * p
@@ -61,7 +75,10 @@ def expectation(X, pi, m, S):
     if np.any(total <= 0):
         return None, None
 
-    l = np.sum(np.log(total))
+    if not np.all(np.isfinite(total)):
+        return None, None
+
+    log_likelihood = np.sum(np.log(total))
     g = g / total
 
-    return g, l
+    return g, log_likelihood
